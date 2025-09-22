@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ứng dụng học từ vựng</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 Ứng dụng học từ vựng</h1>
+            <p>Học từ vựng thông minh với hệ thống ôn tập tự động</p>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab(this, 'upload')">📁 Upload File</button>
+            <button class="nav-tab" onclick="showTab(this, 'search')">🔍 Tra từ</button>
+            <button class="nav-tab" onclick="showTab(this, 'learn')">📖 Học</button>
+            <button class="nav-tab" onclick="showTab(this, 'test')">🎯 Kiểm tra</button>
+            <button class="nav-tab" onclick="showTab(this, 'stats')">📊 Thống kê</button>
+        </div>
+
+        <!-- Upload Tab -->
+        <div id="upload" class="tab-content active">
+            <h2>Tải lên file từ vựng</h2>
+            <p>Định dạng: từ tiếng Anh    nghĩa tiếng Việt (ngăn cách bởi 4 dấu cách)</p>
+            
+            <div class="upload-area" id="uploadArea">
+                <div>
+                    <h3>Kéo thả file vào đây hoặc</h3>
+                    <input type="file" id="fileInput" accept=".txt" style="display: none;">
+                    <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                        Chọn file TXT
+                    </button>
+                </div>
+            </div>
+
+            <div id="uploadStatus"></div>
+            
+            <div class="word-list" id="uploadedWords" style="display: none;">
+                <h3>Từ vựng đã tải lên:</h3>
+            </div>
+        </div>
+
+        <!-- Search Tab -->
+        <div id="search" class="tab-content">
+            <h2>Tra cứu từ vựng</h2>
+            <div class="search-container">
+                <input type="text" class="search-box" id="searchInput" 
+                       placeholder="Nhập từ tiếng Anh hoặc tiếng Việt để tìm kiếm...">
+            </div>
+            <div id="searchResults"></div>
+        </div>
+
+        <!-- Learn Tab -->
+        <div id="learn" class="tab-content">
+            <h2>Chế độ học</h2>
+            
+            <div class="controls">
+                <button class="control-btn btn-primary" onclick="startLearning()">Bắt đầu học</button>
+                <button class="control-btn btn-secondary" onclick="shuffleCards()">Trộn bài</button>
+                <button class="control-btn btn-secondary" onclick="playPronunciation()" title="Phát âm">🔊 Phát âm</button>
+            </div>
+
+            <div class="flashcard" id="learnCard" onclick="flipCard('learnCard')" style="display: none;">
+                <div class="flashcard-inner">
+                    <div class="flashcard-front">
+                        <div id="learnFront">Nhấn "Bắt đầu học" để bắt đầu</div>
+                    </div>
+                    <div class="flashcard-back">
+                        <div id="learnBack">Nghĩa</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="controls" id="learnControls" style="display: none;">
+                <button class="control-btn btn-danger" onclick="markDifficult()">Khó</button>
+                <button class="control-btn btn-secondary" onclick="markMedium()">Trung bình</button>
+                <button class="control-btn btn-success" onclick="markEasy()">Dễ</button>
+                <button class="control-btn btn-primary" onclick="nextCard()">Tiếp theo</button>
+            </div>
+
+            <div class="progress-bar">
+                <div class="progress-fill" id="learnProgress"></div>
+            </div>
+            <div id="learnResult" style="text-align:center; margin-top: 10px;"></div>
+        </div>
+
+        <!-- Test Tab -->
+        <div id="test" class="tab-content">
+            <h2>Chế độ kiểm tra</h2>
+            
+            <div class="controls">
+                <button class="control-btn btn-primary" onclick="startTest()">Bắt đầu kiểm tra</button>
+                <button class="control-btn btn-secondary" onclick="reviewMistakes()">Ôn lại lỗi</button>
+            </div>
+
+            <div class="flashcard" id="testCard" style="display: none;">
+                <div class="flashcard-inner">
+                    <div class="flashcard-front">
+                        <div id="testQuestion">Câu hỏi</div>
+                    </div>
+                    <div class="flashcard-back">
+                        <div id="testAnswer">Đáp án</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="controls" id="testControls" style="display: none;">
+                <button class="control-btn btn-secondary" onclick="playPronunciation()" title="Phát âm">🔊 Phát âm</button>
+                <input type="text" id="userAnswer" placeholder="Nhập câu trả lời..." 
+                       style="padding: 10px; border: 2px solid #dee2e6; border-radius: 5px; margin: 10px;">
+                <button class="control-btn btn-primary" onclick="checkAnswer()">Kiểm tra</button>
+                <button class="control-btn btn-secondary" onclick="showAnswer()">Xem đáp án</button>
+                <button class="control-btn btn-primary" onclick="nextTestCard()">Tiếp theo</button>
+            </div>
+
+            <div id="testResult" style="margin-top: 20px;"></div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="testProgress"></div>
+            </div>
+        </div>
+
+        <!-- Stats Tab -->
+        <div id="stats" class="tab-content">
+            <h2>Thống kê học tập</h2>
+            
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalWords">0</div>
+                    <div>Tổng số từ</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="learnedWords">0</div>
+                    <div>Đã học</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="correctRate">0%</div>
+                    <div>Tỷ lệ đúng</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="studySessions">0</div>
+                    <div>Phiên học</div>
+                </div>
+            </div>
+
+            <h3>Danh sách từ vựng theo mức độ</h3>
+            <div class="word-list" id="wordsByDifficulty"></div>
+        </div>
+    </div>
+
+    <script src="script.js">
+
+    </script>
+</body>
+</html>
