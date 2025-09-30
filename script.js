@@ -6,6 +6,8 @@
         let testScore = 0;
         let testTotal = 0;
         let mistakes = [];
+        let testDirection = 'both'; // 'both' | 'en_to_vi' | 'vi_to_en'
+        let lastQuestionWasEnglish = true;
         
         // Load data from memory (since we can't use localStorage)
         let userData = {
@@ -263,6 +265,10 @@
             shuffleCards();
             document.getElementById('testCard').style.display = 'block';
             document.getElementById('testControls').style.display = 'block';
+            // Ensure card is not flipped before first question
+            const card = document.getElementById('testCard');
+            if (card) card.classList.remove('flipped');
+            isFlipped = false;
             showTestCard();
         }
 
@@ -273,7 +279,16 @@
             }
             
             const word = vocabulary[currentCard];
-            const isEnglishToVietnamese = Math.random() > 0.5;
+            // Determine direction
+            let isEnglishToVietnamese = true;
+            if (testDirection === 'both') {
+                isEnglishToVietnamese = Math.random() > 0.5;
+            } else if (testDirection === 'en_to_vi') {
+                isEnglishToVietnamese = true;
+            } else if (testDirection === 'vi_to_en') {
+                isEnglishToVietnamese = false;
+            }
+            lastQuestionWasEnglish = isEnglishToVietnamese;
             
             if (isEnglishToVietnamese) {
                 document.getElementById('testQuestion').textContent = word.english;
@@ -295,7 +310,8 @@
         }
 
         function checkAnswer() {
-            const userAnswer = document.getElementById('userAnswer').value.trim().toLowerCase();
+            const userAnswerRaw = document.getElementById('userAnswer').value.trim();
+            const userAnswer = userAnswerRaw.toLowerCase();
             const correctAnswer = document.getElementById('testAnswer').textContent.toLowerCase();
             const word = vocabulary[currentCard];
             
@@ -303,31 +319,43 @@
             testTotal++;
             userData.totalAnswers++;
             
-            const isCorrect = userAnswer === correctAnswer || 
-                             correctAnswer.includes(userAnswer) || 
-                             userAnswer.includes(correctAnswer);
+            // Avoid empty input being counted as correct
+            let isCorrect = false;
+            if (userAnswer.length > 0) {
+                // Normalize multiple possible answers by splitting on ';' or ','
+                const correctParts = correctAnswer.split(/[,;]/).map(s => s.trim());
+                isCorrect = correctParts.some(part => part === userAnswer || part.includes(userAnswer) || userAnswer.includes(part));
+            }
             
             if (isCorrect) {
                 word.correct++;
                 testScore++;
                 userData.correctAnswers++;
                 document.getElementById('testResult').innerHTML = 
-                    '<div style="color: green;">✅ Chính xác!</div>';
+                    '<div style="color: green;">Correct!</div>';
+                playFeedbackTone(true);
             } else {
                 mistakes.push(word);
                 document.getElementById('testResult').innerHTML = 
-                    `<div style="color: red;">❌ Sai rồi! Đáp án đúng: <strong>${document.getElementById('testAnswer').textContent}</strong></div>`;
+                    `<div style="color: red;">Wrong! The correct answer is: <strong>${document.getElementById('testAnswer').textContent}</strong></div>`;
+                playFeedbackTone(false);
             }
         }
 
         function showAnswer() {
             const card = document.getElementById('testCard');
-            card.classList.add('flipped');
+            // Only flip if not already flipped
+            if (card && !card.classList.contains('flipped')) {
+                card.classList.add('flipped');
+                isFlipped = true;
+            }
         }
 
         function nextTestCard() {
             const card = document.getElementById('testCard');
-            if (card) card.classList.remove('flipped');
+            if (card && card.classList.contains('flipped')) {
+                card.classList.remove('flipped');
+            }
             isFlipped = false;
             currentCard++;
             showTestCard();
@@ -387,6 +415,58 @@
                 || voices.find(v => v.lang && v.lang.toLowerCase().startsWith('en'));
             if (preferred) utterance.voice = preferred;
             window.speechSynthesis.speak(utterance);
+        }
+
+        // Feedback tone for correct/incorrect
+        function playFeedbackTone(isCorrect) {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) return;
+                const ctx = new AudioContext();
+
+                const master = ctx.createGain();
+                master.gain.value = 0.35; // increased overall volume
+                master.connect(ctx.destination);
+
+                function playNote(frequency, startTime, duration, type) {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(frequency, startTime);
+                    // Simple pluck envelope (louder peak)
+                    gain.gain.setValueAtTime(0.0001, startTime);
+                    gain.gain.exponentialRampToValueAtTime(1.5, startTime + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+                    osc.connect(gain).connect(master);
+                    osc.start(startTime);
+                    osc.stop(startTime + duration + 0.02);
+                }
+
+                const now = ctx.currentTime;
+                if (isCorrect) {
+                    // Pleasant ascending arpeggio (E5, G#5, B5)
+                    playNote(659.25, now + 0.00, 0.12, 'triangle');
+                    playNote(830.61, now + 0.12, 0.12, 'triangle');
+                    playNote(987.77, now + 0.24, 0.20, 'triangle');
+                } else {
+                    // Soft descending buzzer (G4 -> E4 -> C4)
+                    playNote(392.00, now + 0.00, 0.15, 'square');
+                    playNote(329.63, now + 0.12, 0.15, 'square');
+                    playNote(261.63, now + 0.24, 0.18, 'square');
+                }
+
+                // Close context a bit later to free resources
+                setTimeout(() => { try { ctx.close(); } catch (_) {} }, 600);
+            } catch (e) {
+                // ignore sound errors
+            }
+        }
+
+        // Set test direction from UI
+        function setTestDirection(value) {
+            if (value === 'both' || value === 'en_to_vi' || value === 'vi_to_en') {
+                testDirection = value;
+            }
         }
 
         // Progress tracking
