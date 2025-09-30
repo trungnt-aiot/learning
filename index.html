@@ -3,35 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ứng dụng học từ vựng</title>
+    <title>English Vocabulary</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>📚 Ứng dụng học từ vựng</h1>
-            <p>Học từ vựng thông minh với hệ thống ôn tập tự động</p>
+            <h1>English Vocabulary</h1>
         </div>
 
         <div class="nav-tabs">
-            <button class="nav-tab active" onclick="showTab(this, 'upload')">📁 Upload File</button>
-            <button class="nav-tab" onclick="showTab(this, 'search')">🔍 Tra từ</button>
-            <button class="nav-tab" onclick="showTab(this, 'learn')">📖 Học</button>
-            <button class="nav-tab" onclick="showTab(this, 'test')">🎯 Kiểm tra</button>
-            <button class="nav-tab" onclick="showTab(this, 'stats')">📊 Thống kê</button>
+            <button class="nav-tab active" onclick="showTab(this, 'upload')">Upload File</button>
+            <button class="nav-tab" onclick="showTab(this, 'search')">Search</button>
+            <button class="nav-tab" onclick="showTab(this, 'learn')">Learn</button>
+            <button class="nav-tab" onclick="showTab(this, 'test')">Test</button>
+            <button class="nav-tab" onclick="showTab(this, 'stats')">Stats</button>
         </div>
 
         <!-- Upload Tab -->
         <div id="upload" class="tab-content active">
-            <h2>Tải lên file từ vựng</h2>
-            <p>Định dạng: từ tiếng Anh    nghĩa tiếng Việt (ngăn cách bởi 4 dấu cách)</p>
+            <h2>Upload File</h2>
+            <p>Format: English word - Vietnamese meaning (separated by 4 spaces)</p>
             
             <div class="upload-area" id="uploadArea">
                 <div>
-                    <h3>Kéo thả file vào đây hoặc</h3>
+                    <h3>Drag and drop file here or</h3>
                     <input type="file" id="fileInput" accept=".txt" style="display: none;">
                     <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
-                        Chọn file TXT
+                        Select TXT file
                     </button>
                 </div>
             </div>
@@ -39,46 +38,46 @@
             <div id="uploadStatus"></div>
             
             <div class="word-list" id="uploadedWords" style="display: none;">
-                <h3>Từ vựng đã tải lên:</h3>
+                <h3>Uploaded Words:</h3>
             </div>
         </div>
 
         <!-- Search Tab -->
         <div id="search" class="tab-content">
-            <h2>Tra cứu từ vựng</h2>
+            <h2>Search</h2>
             <div class="search-container">
                 <input type="text" class="search-box" id="searchInput" 
-                       placeholder="Nhập từ tiếng Anh hoặc tiếng Việt để tìm kiếm...">
+                       placeholder="Enter English or Vietnamese word to search...">
             </div>
             <div id="searchResults"></div>
         </div>
 
         <!-- Learn Tab -->
         <div id="learn" class="tab-content">
-            <h2>Chế độ học</h2>
+            <h2>Learn</h2>
             
             <div class="controls">
-                <button class="control-btn btn-primary" onclick="startLearning()">Bắt đầu học</button>
-                <button class="control-btn btn-secondary" onclick="shuffleCards()">Trộn bài</button>
-                <button class="control-btn btn-secondary" onclick="playPronunciation()" title="Phát âm">🔊 Phát âm</button>
+                <button class="control-btn btn-primary" onclick="startLearning()">Start Learn</button>
+                <button class="control-btn btn-secondary" onclick="shuffleCards()">Shuffle</button>
+                <button class="control-btn btn-secondary" onclick="playPronunciation()" title="Pronunciation">Pronunciation</button>
             </div>
 
             <div class="flashcard" id="learnCard" onclick="flipCard('learnCard')" style="display: none;">
                 <div class="flashcard-inner">
                     <div class="flashcard-front">
-                        <div id="learnFront">Nhấn "Bắt đầu học" để bắt đầu</div>
+                        <div id="learnFront">Press "Start Learn" to start</div>
                     </div>
                     <div class="flashcard-back">
-                        <div id="learnBack">Nghĩa</div>
+                        <div id="learnBack">Meaning</div>
                     </div>
                 </div>
             </div>
 
             <div class="controls" id="learnControls" style="display: none;">
-                <button class="control-btn btn-danger" onclick="markDifficult()">Khó</button>
-                <button class="control-btn btn-secondary" onclick="markMedium()">Trung bình</button>
-                <button class="control-btn btn-success" onclick="markEasy()">Dễ</button>
-                <button class="control-btn btn-primary" onclick="nextCard()">Tiếp theo</button>
+                <button class="control-btn btn-danger" onclick="markDifficult()">Hard</button>
+                <button class="control-btn btn-secondary" onclick="markMedium()">Medium</button>
+                <button class="control-btn btn-success" onclick="markEasy()">Easy</button>
+                <button class="control-btn btn-primary" onclick="nextCard()">Next</button>
             </div>
 
             <div class="progress-bar">
@@ -89,31 +88,36 @@
 
         <!-- Test Tab -->
         <div id="test" class="tab-content">
-            <h2>Chế độ kiểm tra</h2>
+            <h2>Test</h2>
             
             <div class="controls">
-                <button class="control-btn btn-primary" onclick="startTest()">Bắt đầu kiểm tra</button>
-                <button class="control-btn btn-secondary" onclick="reviewMistakes()">Ôn lại lỗi</button>
+                <select id="testDirection" class="direction-select" onchange="setTestDirection(this.value)" title="Hướng câu hỏi">
+                    <option value="both">Random (English ↔ Vietnamese)</option>
+                    <option value="en_to_vi">Only English → Vietnamese</option>
+                    <option value="vi_to_en">Only Vietnamese → English</option>
+                </select>
+                <button class="control-btn btn-primary" onclick="startTest()">Start Test</button>
+                <button class="control-btn btn-secondary" onclick="reviewMistakes()">Review Mistakes</button>
             </div>
 
             <div class="flashcard" id="testCard" style="display: none;">
                 <div class="flashcard-inner">
                     <div class="flashcard-front">
-                        <div id="testQuestion">Câu hỏi</div>
+                        <div id="testQuestion">Question</div>
                     </div>
                     <div class="flashcard-back">
-                        <div id="testAnswer">Đáp án</div>
+                        <div id="testAnswer">Answer</div>
                     </div>
                 </div>
             </div>
 
             <div class="controls" id="testControls" style="display: none;">
                 <button class="control-btn btn-secondary" onclick="playPronunciation()" title="Phát âm">🔊 Phát âm</button>
-                <input type="text" id="userAnswer" placeholder="Nhập câu trả lời..." 
+                <input type="text" id="userAnswer" placeholder="Enter your answer..." 
                        style="padding: 10px; border: 2px solid #dee2e6; border-radius: 5px; margin: 10px;">
-                <button class="control-btn btn-primary" onclick="checkAnswer()">Kiểm tra</button>
-                <button class="control-btn btn-secondary" onclick="showAnswer()">Xem đáp án</button>
-                <button class="control-btn btn-primary" onclick="nextTestCard()">Tiếp theo</button>
+                <button class="control-btn btn-primary" onclick="checkAnswer()">Test</button>
+                <button class="control-btn btn-secondary" onclick="showAnswer()">Show Answer</button>
+                <button class="control-btn btn-primary" onclick="nextTestCard()">Next</button>
             </div>
 
             <div id="testResult" style="margin-top: 20px;"></div>
@@ -124,28 +128,28 @@
 
         <!-- Stats Tab -->
         <div id="stats" class="tab-content">
-            <h2>Thống kê học tập</h2>
+            <h2>Stats</h2>
             
             <div class="stats">
                 <div class="stat-card">
                     <div class="stat-number" id="totalWords">0</div>
-                    <div>Tổng số từ</div>
+                    <div>Total Words</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-number" id="learnedWords">0</div>
-                    <div>Đã học</div>
+                    <div>Learned</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-number" id="correctRate">0%</div>
-                    <div>Tỷ lệ đúng</div>
+                    <div>Correct Rate</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-number" id="studySessions">0</div>
-                    <div>Phiên học</div>
+                    <div>Study Sessions</div>
                 </div>
             </div>
 
-            <h3>Danh sách từ vựng theo mức độ</h3>
+            <h3>Word List by Difficulty</h3>
             <div class="word-list" id="wordsByDifficulty"></div>
         </div>
     </div>
